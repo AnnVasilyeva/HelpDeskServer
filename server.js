@@ -9,7 +9,6 @@ const public = path.join(__dirname, '/public');
 
 app.use(koaStatic(public));
 
-
 app.use(async (ctx, next) => {
     const origin = ctx.request.get('Origin');
     if (!origin) {
@@ -50,6 +49,8 @@ app.use(koaBody({
 const tickets = [];
 
 app.use(async ctx => {
+    console.log(ctx.request.querystring);
+    console.log(ctx.request.body);
     const { method } = ctx.request.querystring;
 
     switch (method) {
@@ -68,4 +69,4 @@ app.use(async ctx => {
 
 
 const port = process.env.PORT || 7070;
-const server = http.createServer(app.callback()).listen(port);
+http.createServer(app.callback()).listen(port);
