@@ -1,6 +1,6 @@
 const http = require('http');
 const path = require('path');
-const Ticket = require('./Tiсket');
+const Ticket = require('./ticket');
 const Koa = require('koa');
 const koaBody = require('koa-body');
 const koaStatic = require('koa-static');
