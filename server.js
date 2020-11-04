@@ -1,14 +1,17 @@
 const http = require('http');
 const path = require('path');
+const Ticket = require('./Tiсket');
 const Koa = require('koa');
 const koaBody = require('koa-body');
 const koaStatic = require('koa-static');
 const app = new Koa();
 
+// => Static file handling
 const public = path.join(__dirname, '/public');
 
 app.use(koaStatic(public));
 
+// => CORS
 app.use(async (ctx, next) => {
     const origin = ctx.request.get('Origin');
     if (!origin) {
@@ -16,6 +19,7 @@ app.use(async (ctx, next) => {
     }
 
     const headers = { 'Access-Control-Allow-Origin': '*', };
+
     if (ctx.request.method !== 'OPTIONS') {
         ctx.response.set({...headers});
         try {
@@ -39,6 +43,7 @@ app.use(async (ctx, next) => {
         }
 });
 
+// => Body Parsers
 app.use(koaBody({
     urlencoded: true,
     multipart: true,
@@ -46,21 +51,39 @@ app.use(koaBody({
     json: true,
 }));
 
-const tickets = [];
 
-app.use(async ctx => {
-    console.log(ctx.request.querystring);
-    console.log(ctx.request.body);
-    const { method } = ctx.request.querystring;
 
+app.use(async (ctx) => {
+    const { method } = ctx.request;
     switch (method) {
-        case 'allTickets':
-            ctx.response.body = tickets;
-            ctx.response.status = 200;
+        case "GET":
+            if (ctx.request.query.method === "allTickets") {
+                ctx.response.body = await Ticket.getAll();
+                ctx.response.status = 200;
+            } else if (ctx.request.query.method === "ticketById") {
+                const ticketId = await Ticket.getById(ctx.request.query.id);
+                ctx.response.body = ticketId;
+            }
+            break;
+        case "POST":
+            const ticketPost = new Ticket(
+                ctx.request.body.name,
+                ctx.request.body.description
+            );
+            await ticketPost.save();
             return;
-
-
-
+        case "PUT":
+            if (ctx.request.body.status) {
+                await Ticket.updateStatus(ctx.request.body.id);
+            } else if (ctx.request.body.descriptionStatus) {
+                await Ticket.updateDescription(ctx.request.body.id);
+            } else {
+                await Ticket.update(ctx.request.body);
+            }
+            return;
+        case "DELETE":
+            await Ticket.delete(ctx.request.query.id);
+            return;
         default:
             ctx.response.status = 404;
             return;
