@@ -4,44 +4,13 @@ const Ticket = require('./ticket');
 const Koa = require('koa');
 const koaBody = require('koa-body');
 const koaStatic = require('koa-static');
+const cors = require('@koa/cors');
 const app = new Koa();
 
 // => Static file handling
 const public = path.join(__dirname, '/public');
-
+app.use(cors());
 app.use(koaStatic(public));
-
-// => CORS
-app.use(async (ctx, next) => {
-    const origin = ctx.request.get('Origin');
-    if (!origin) {
-        return await next();
-    }
-
-    const headers = { 'Access-Control-Allow-Origin': '*', };
-
-    if (ctx.request.method !== 'OPTIONS') {
-        ctx.response.set({...headers});
-        try {
-            return await next();
-        } catch (e) {
-            e.headers = {...e.headers, ...headers};
-            throw e;
-        }
-    }
-
-    if (ctx.request.get('Access-Control-Request-Method')) {
-        ctx.response.set({
-        ...headers,
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH',
-    });
-        if (ctx.request.get('Access-Control-Request-Headers')) {
-            ctx.response.set('Access-Control-Allow-Headers',
-            ctx.request.get('Access-Control-Allow-Request-Headers'));
-        }
-        ctx.response.status = 204; // No content
-        }
-});
 
 // => Body Parsers
 app.use(koaBody({
@@ -50,8 +19,6 @@ app.use(koaBody({
     text: true,
     json: true,
 }));
-
-
 
 app.use(async (ctx) => {
     const { method } = ctx.request;
@@ -71,18 +38,22 @@ app.use(async (ctx) => {
                 ctx.request.body.description
             );
             await ticketPost.save();
+            ctx.response.body = ticketPost;
+            ctx.response.status = 200;
             return;
         case "PUT":
             if (ctx.request.body.status) {
                 await Ticket.updateStatus(ctx.request.body.id);
-            } else if (ctx.request.body.descriptionStatus) {
-                await Ticket.updateDescription(ctx.request.body.id);
             } else {
                 await Ticket.update(ctx.request.body);
             }
+            ctx.response.body = 'updated';
+            ctx.response.status = 200;
             return;
         case "DELETE":
             await Ticket.delete(ctx.request.query.id);
+            ctx.response.body = 'deleted';
+            ctx.response.status = 204;
             return;
         default:
             ctx.response.status = 404;

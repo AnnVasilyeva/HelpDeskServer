@@ -7,7 +7,6 @@ class Ticket {
         this.id = uuidv4();
         this.name = name;
         this.description = description;
-        this.descriptionStatus = false;
         this.status = false;
         this.created = new Date().toLocaleString();
     }
@@ -25,6 +24,7 @@ class Ticket {
                     }else{
                         resolve()
                     }
+
                 }
             )
         })
@@ -35,7 +35,6 @@ class Ticket {
         return {
             name: this.name,
             description: this.description,
-            descriptionStatus: this.descriptionStatus,
             status: this.status,
             created: this.created,
             id: this.id,
@@ -64,6 +63,7 @@ class Ticket {
     }
 
     static async update(ticket){
+
         const tickets = await Ticket.getAll();
         const idx = tickets.findIndex(elem => elem.id === ticket.id);
         tickets[idx].name = ticket.name;
@@ -88,26 +88,6 @@ class Ticket {
         const tickets = await Ticket.getAll();
         const idx = tickets.findIndex(elem => elem.id === id);
         tickets[idx].status = !tickets[idx].status;
-
-        return  new Promise((resolve, reject) =>{
-            fs.writeFile(
-                path.join(__dirname, 'public', 'db.json'),
-                JSON.stringify(tickets),
-                err => {
-                    if(err){
-                        reject(err)
-                    }else{
-                        resolve()
-                    }
-                }
-            )
-        })
-    }
-
-    static async updateDescription(id){
-        const tickets = await Ticket.getAll();
-        const idx = tickets.findIndex(elem => elem.id === id);
-        tickets[idx].descriptionStatus = !tickets[idx].descriptionStatus;
 
         return  new Promise((resolve, reject) =>{
             fs.writeFile(
